@@ -1,0 +1,38 @@
+import stdio, string;
+
+struct Integer ( int val );
+
+Integer sum(Integer a, Integer b) {
+	return Integer(a.val + b.val);
+}
+
+Integer product(Integer c, const Integer d)  {
+	return Integer(c.val * d.val);
+}
+
+Integer minus(Integer a, Integer b){
+	return Integer(a.val - b.val);
+}
+
+Integer divide(Integer a, Integer b){
+	return Integer(a.val / b.val);
+}
+
+void print(Integer a, Integer b){
+	if(a.val >= b.val) return;
+	printf("%d\n", a.val);
+	print(Integer(a.val + 1), b);
+}
+
+void main() {
+	
+	Integer a = Integer(5), b = Integer(10);
+
+	print(a, b);
+
+	printf("%d\n", sum(a, b).val);
+	printf("%d\n", product(a, b).val);
+	printf("%d\n", minus(a, b).val);
+	printf("%d\n", divide(a, b).val);
+
+}
