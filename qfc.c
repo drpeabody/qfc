@@ -9,7 +9,7 @@
 
 char StructsDeclared   [MAX_TOKENS_REPLACED][MAX_TOKEN_LENGTH] = { "" };
 char StructsReplace[MAX_TOKENS_REPLACED][MAX_TOKEN_LENGTH] = { "" };
-int NumTokensReplaced = 0;
+int NumTokensReplaced = 0, numLambdasDefined = 0;
 
 char *removeTabsNewLines(char *str){
   	while(*str == '\n' || *str == '\t' || *str == ' ') str++;
@@ -102,14 +102,16 @@ void preformReplace(char* line){
 	}
 }
 
-void compileCompactCode(FILE* out, char* compactCode){
-	// printf("%s\n", compactCode);
-	if(beginsWith(compactCode, "import")){
-		char* t = strtok(&compactCode[7], ",; ");
+void compileCompactCode(char* compactCode){
+	char compiled[MAX_LINE_LENGTH] = "";
 
-		while(t != NULL){
-			fprintf(out, "#include <%s.h>\n", t);
-			t = strtok(NULL, ",; ");
+	if(beginsWith(compactCode, "import")){
+		char* t = strtok(compactCode, ",; "); //Skip the First token as it is "import"
+
+		while((t = strtok(NULL, ",; ")) != NULL){
+			strcat(compiled, "#include <");
+			strcat(compiled, t); 	
+			strcat(compiled, ".h>\n");
 		}
 	}
 	else if(beginsWith(compactCode, "struct")){
@@ -124,30 +126,58 @@ void compileCompactCode(FILE* out, char* compactCode){
 		NumTokensReplaced++;
 
 		preformReplace(compactCode + 7 + nameLength);
+		strcpy(compiled, "struct ");
+		int ptr = 7;
 		
-		char* t = compactCode;
+		char* t = compactCode + 7;
 		for(; *t; t++){
 			switch(*t){
 				case ',':
-					fprintf(out, "; const "); break;
+					strcat(compiled, "; const "); ptr += 8; break;
 				case '(':
-					fprintf(out, "{ const "); break;
+					strcat(compiled, "{ const ");  ptr += 8; break;
 				case ')':
-					fprintf(out, "; }"); break;
+					strcat(compiled, "; }");  ptr += 3; break;
 				default:
-					fprintf(out, "%c", *t); break;
+					compiled[ptr++] = *t; break;
 			}
 		}
 		if(*(t-1) != ';'){
-			fprintf(out, ";\n");
+			strcat(compiled, ";\n");
 		}
 		else{
-			fprintf(out, "\n");
+			strcat(compiled, "\n");
 		}
 	}
 	
 	else {
 		char buffer[MAX_LINE_LENGTH];
+
+		//apply const to function parameters
+		int l = strlen(compactCode);
+		if(compactCode[l-1] == '{'){
+			char *f = &compactCode[l-2];
+			while(*f == ' ') f--;
+			if(*f == ')' && !beginsWith(compactCode, "switch") && !beginsWith(compactCode, "if") && *(f - 1) != '('){
+				char ins[] = " const ";
+				char buffer[64];
+				//This is definitely a function declaration we must const every argument if they aren't const yet
+					// printf(compactCode);
+				int isFunc = 0;
+				while(f != compactCode){
+					if(*f == '(') isFunc = 0;
+					else if(*f == ',') isFunc = 1;
+					if((*f == ',' || *f == '(') && !isFunc && !(beginsWith(f + 1, "const") || beginsWith(f + 1, " const")   )){
+						strcpy(buffer, f + 1);
+						strcpy(f + 1, ins);
+						strcpy(f + 1 + 7, buffer);
+						f--;
+					}
+					
+					f--;
+				}
+			}
+		}
 
 		for (int i = 0; i < NumTokensReplaced; ++i)	{
 			//Check if any new structs are created "Integer (6)" -> "(Integer) { 6 }"
@@ -187,43 +217,12 @@ void compileCompactCode(FILE* out, char* compactCode){
 		}	
 
 
-		//apply const to function parameters
-		int l = strlen(compactCode);
-		if(compactCode[l-1] == '{'){
-			char *f = &compactCode[l-2];
-			while(*f == ' ') f--;
-			if(*f == ')' && !beginsWith(compactCode, "switch") && !beginsWith(compactCode, "if")){
-				char ins[] = " const ";
-				char buffer[64];
-				//This is definitely a function declaration we must const every argument if they aren't const yet
-					// printf(compactCode);
-				while(*f != '('){
-					if(*f == ',' && !(beginsWith(f + 1, "const") || beginsWith(f + 1, " const"))){
-						strcpy(buffer, f + 1);
-						strcpy(f + 1, ins);
-						strcpy(f + 1 + 7, buffer);
-						f--;
-					}
-					
-					f--;
-				}
-				if(*(f + 1) == ' ') f++;
-				char * g = f + 1;
-				while(*g == ' ') g++;
-				if(*g != ')' && !beginsWith(f + 1, "const")){
-					strcpy(buffer, f + 1);
-					strcpy(f + 1, ins);
-					strcpy(f + 1 + 7, buffer);
-				}
-					
-			}
-		}
+		
 		//Apply const to local variables find a single '=' sign
 
 		char *f = strstr(compactCode, "=");
 		if(f != NULL){
 			if(*(f + 1) != '=' && *(f - 1) != '<' && *(f - 1) != '>' && *(f - 1) != '!' && *(f - 1) != '='){
-
 				while(f > compactCode && *f != '(') f--;
 
 				if(!beginsWith(f, "const")){
@@ -239,8 +238,10 @@ void compileCompactCode(FILE* out, char* compactCode){
 
 		//  "(Integer) { 6 }" -> "(struct Integer) { 6 }"
 		preformReplace(compactCode);
-		fprintf(out, "%s\n", compactCode);
+		strcpy(compiled, compactCode);
+		strcat(compiled, "\n");
 	}
+	strcpy(compactCode, compiled);
 
 }
 
@@ -265,6 +266,82 @@ void gcc(){
 		case 0: printf("Compile Success.");
 	}
 
+}
+
+void buildLambda(char* buffer, char* nameLambda, const char* line){
+	//Line points to the Line where the Lambda began, it contains at least one "=>"
+
+	char *ptr = strstr(line, "=>"), *Lptr = ptr;
+	int bracketLvl = 1; //1 becuase we loop after we enter Lambda Prototype
+
+	while(*ptr != '(') ptr--; //Enter Lambda Prototype
+
+	while(1) {
+		if(*ptr == ')') bracketLvl++;
+		if(*ptr == '(') {
+			if(bracketLvl == 1) break;
+			bracketLvl--;
+		}
+		ptr--;
+	}
+	//ptr now points to the start of the argument list of the lambda
+
+	ptr--;
+	while(*ptr == ' ') ptr--;
+	//ptr now points to the end of the return type of lambda
+	char* r = ptr;
+	while(*ptr != ' ') ptr--;
+	//ptr now points to space before the return type
+
+	char *start = ptr;
+
+	strncpy(buffer, ptr, r - ptr + 1); 
+	buffer[r - ptr + 1] = '\0';
+	//Terminate the string for strcat() to work later
+
+	ptr = r; //ptr pointrs to end of return type of lambda
+	r = buffer + strlen(buffer); //r points to the null ending of buffer
+
+	*r = ' '; r++; *r = '\0';
+
+	// *nameLambda = '\0';
+	strcpy(nameLambda, "Lambda");
+	sprintf(nameLambda + 6, "%d", numLambdasDefined++);
+	strcat(buffer, nameLambda);
+	r += strlen(nameLambda);
+
+	strncpy(r, ptr + 1, Lptr - ptr);
+	r += Lptr - ptr - 1;
+	*r = '\0';
+	//Lambda prototype is now built
+	while(*Lptr != '{') Lptr++;
+	ptr = Lptr;
+
+	bracketLvl = 0;
+	while(*Lptr){
+		if(*Lptr == '{') bracketLvl++;
+		if(*Lptr == '}') {
+			if(bracketLvl == 1) break;
+			bracketLvl --;
+		}
+		Lptr++;
+	}
+	//Now Lptr points to the end of body of the lambda and ptr points to its beginning
+
+	Lptr++;
+	char c = *Lptr;
+	*Lptr = '\0';
+
+	strcat(buffer, ptr);
+
+	*Lptr = c;
+	r += Lptr - ptr;
+	*r = ';';
+	*(r + 1) = '\0';
+	//The entire Lambda is now built
+
+	strcpy(start, nameLambda);
+	strcpy(start + strlen(nameLambda), Lptr);
 }
 
 void main(int argc, char *argv[]){
@@ -293,7 +370,35 @@ void main(int argc, char *argv[]){
 
     			compactLine[compactLinePTR] = '\0';
 
-    			compileCompactCode(out, compactLine);
+
+    			char* l;
+    			if((l = strstr(compactLine, "=>"))){ //Lambda Found
+    				while(*l != '{') l++;
+    				int curlyBracketLevel = 1;
+    				while(*(l++)){
+    					if(*l == '{') curlyBracketLevel++;
+    					if(*l == '}') curlyBracketLevel--;
+    				}
+    				if(curlyBracketLevel > 1){
+    					//Multilevel Lambda
+    				}
+    				else{
+    					char lambda[MAX_LINE_LENGTH], name[10], buffer[MAX_LINE_LENGTH];
+    					buildLambda(lambda, name, compactLine);
+    					strcpy(buffer, compactLine);
+    					strcpy(compactLine, lambda);
+    					strcat(compactLine, "\n");
+    					strcat(compactLine, buffer);
+    					//single Level Lambda
+    				}
+    				
+    			}
+
+
+    			compileCompactCode(compactLine);
+
+
+    			fprintf(out, "%s", compactLine);
     			compactLinePTR = 0;
 
     		}
