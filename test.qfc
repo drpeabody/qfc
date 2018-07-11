@@ -1,6 +1,7 @@
 import stdio, string;
 
-struct Integer ( int val );
+struct Integer ( int val,  		 
+	int lol ); //This is a comment
 
 Integer sum(Integer a, Integer b) {
 	return Integer(a.val + b.val);
@@ -15,7 +16,9 @@ Integer minus(Integer a, Integer b){
 }
 
 Integer divide(Integer a, Integer b){
-	return Integer(a.val / b.val);
+	return Integer(a.val / b.val); /* Random Multi line comment
+	Another line
+	*/
 }
 
 void printIf(Integer a, int pred(Integer b)){
@@ -23,12 +26,14 @@ void printIf(Integer a, int pred(Integer b)){
 }
 
 void main() {
-	int c;
-	c = 6;
+	int c = 6;
 	
 	Integer a = Integer(5), b = Integer(10);
 
-	printIf(a, int (Integer a) => { Integer c = sum(a, b); return c.val % 2 == 0; });
+	printIf(a, int (Integer a) => {
+		Integer c = sum(a, b); 
+		return c.val % 2 == 1; 
+	});
 
 	printf("%d\n", sum(a, b).val);
 	printf("%d\n", product(a, b).val);
