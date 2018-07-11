@@ -47,7 +47,8 @@ Such a splitting of declaration and assignment is not encouraged and hence its s
 
 ## Lambdas
 
-All Lambda functions must be single lined as of now.
+Check the `test.qfc` to see an a live example of a Lambda Expression. Also check `code.c` 
+to see how it gets parsed.
 
 A function that takes a Function as parameter is declared as follows:   
 ```
@@ -65,7 +66,6 @@ float Lambda0(int a) { return (float)a; };
 mapIntToFloat(Lambda0);
 
 ```
-Extended Lambda (Lambdas declared over many lines) support is will be coming soon.
 
 ##
 
