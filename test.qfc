@@ -18,7 +18,7 @@ Integer minus(Integer a, Integer b){
 Integer divide(Integer a, Integer b){
 	return Integer(a.val / b.val); /* Random Multi line comment
 	Another line
-	*/
+	*/	
 }
 
 void printIf(Integer a, int pred(Integer b)){
@@ -30,9 +30,8 @@ void main() {
 	
 	Integer a = Integer(5), b = Integer(10);
 
-	printIf(a, int (Integer a) => {
-		Integer c = sum(a, b); 
-		return c.val % 2 == 1; 
+	printIf(a, int (Integer z) => {
+		return z.val % 2 == 1; 
 	});
 
 	printf("%d\n", sum(a, b).val);

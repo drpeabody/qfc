@@ -351,7 +351,7 @@ char *clearComments(char *line){
 	char *t = strstr(line, "/*");
 	if(t && !isInComments){
 		isInComments = 1;
-		*res = '\0';
+		*t = '\0';
 	}
 	else if(isInComments){
 		t = strstr(line, "*/");
@@ -375,61 +375,7 @@ void main(int argc, char *argv[]){
 	int compactLinePTR = 0;
 
     while (fgets(line, sizeof(line), file)) {
-
-    // 	char* v = removeTabsNewLines(line);
-
-    // 	if(*v == '/' && *(v + 1) == '*') isInComments = 1;
     	
-    // 	if(! isInComments) {
-    // 		v = filterSingleLineComments(v);
-    // 		int k = strlen(v);
-    // 		compactLinePTR += k;
-
-    // 		if(shouldnewLine(v)){
-				// strncpy(compactLine + compactLinePTR - k, v, k);
-
-    // 			compactLine[compactLinePTR] = '\0';
-
-    // 			char* l;
-    // 			if((l = strstr(compactLine, "=>"))){ //Lambda Found
-    // 				while(*l != '{') l++;
-    // 				int curlyBracketLevel = 1;
-    // 				while(*(l++)){
-    // 					if(*l == '{') curlyBracketLevel++;
-    // 					if(*l == '}') curlyBracketLevel--;
-    // 				}
-    // 				if(curlyBracketLevel >= 1){
-    // 					// Multilevel Lambda
-
-
-    // 				}
-    // 				else{
-    // 					// Single Level Lambda
-    // 					char lambda[MAX_LINE_LENGTH], name[10], buffer[MAX_LINE_LENGTH];
-    // 					buildLambda(lambda, name, compactLine);
-    // 					strcpy(buffer, compactLine);
-    // 					strcpy(compactLine, lambda);
-    // 					strcat(compactLine, "\n");
-    // 					strcat(compactLine, buffer);
-    // 					//single Level Lambda
-    // 				}
-    				
-    // 			}
-
-
-    // 			compileCompactCode(compactLine);
-
-
-    // 			fprintf(out, "%s", compactLine);
-    // 			compactLinePTR = 0;
-
-    // 		}
-    // 		else{
-    // 			fillSting(compactLine, v, 0, k, compactLinePTR - k);
-    // 		}
-    // 	}
-
-    // 	if(*v == '*' && *(v + 1) == '/') isInComments = 0;/
     	char* a = clearComments(line);
     	char* b = removeTabsNewLines(a);
     	char* v = filterSingleLineComments(b);
