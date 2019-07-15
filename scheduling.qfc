@@ -1,0 +1,31 @@
+import stdio, string;
+
+//All time units are in microseconds
+
+struct Process (
+	int deadLine, //DeadLine of the Process in absolute global time
+	int timeReq, //Microseconds that this process needs to be running in order to complete
+	int timeRun //Microseconds this process has run in total, process ends when this exceeds timeReq
+);
+
+struct CPU(
+	int time //Global Absolute Time in Microseconds
+);
+
+void b();
+
+void a() {
+	printf("A Called.\n");
+	b();
+}
+
+void b() {
+	printf("B Called.\n");
+	a();
+}
+
+void main(){
+	// FILE *in = fopen("input", "r");
+
+	a();
+}

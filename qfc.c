@@ -84,10 +84,10 @@ void replaceAll(char* line, const char* StructsDeclared, const char *replace){
 	char buffer[MAX_LINE_LENGTH], *d = line;
 	while((d = strstr(d, StructsDeclared))){
 		if(isValidStructToken(line, d, fl)){
-				strcpy(buffer, d + fl);
-				strcpy(d, replace);
-				strcpy(d + rl, buffer);
-				d += rl;
+			strcpy(buffer, d + fl);
+			strcpy(d, replace);
+			strcpy(d + rl, buffer);
+			d += rl;
 		}
 		else{
 			d += fl;
@@ -375,7 +375,7 @@ void main(int argc, char *argv[]){
 	int compactLinePTR = 0;
 
     while (fgets(line, sizeof(line), file)) {
-    	
+
     	char* a = clearComments(line);
     	char* b = removeTabsNewLines(a);
     	char* v = filterSingleLineComments(b);
