@@ -45,7 +45,9 @@ const TOKENS = {
 	},
 	'struct': (input, curline, curIdx) => {
 		curline.shift();
-		let name = curline.shift();
+		let temp = curline.shift().split('(');
+		let name = temp[0];
+		curline[0] = temp[1] + ' ' + curline[0];
 
 		let i = 1;
 		while(!curline[curline.length-1].endsWith(');')){
@@ -62,13 +64,12 @@ const TOKENS = {
 		return new Code(res, i);
 	},
 	'':  (input, curline, curIdx) => {
-		STRUCTS.forEach(x => {
-			for(let i = 0; i < curline.length; i++){
-				if(curline[i].beginsWith(x + '(')){
-					
-				}
-			}
-		});
+		// console.log(curline)
+		// STRUCTS.forEach(struct => {
+			// curline.find(word => {
+				// if(word.indexOf(struct) !== -1) console.log(curline);
+			// });
+		// });
 			return new Code(placeStructs(curline).join(' '), 1);
 	},
 
